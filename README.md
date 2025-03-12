@@ -49,10 +49,32 @@ should be placed in `tests/authorService.test.ts`.
 
 Briefly explain a limitation of the tests in `tests/authorSchema.test.ts` in the space below.
 
-
+One limitation of the tests in `tests/authorSchema.test.ts` is that they rely on mocking Mongoose methods (countDocuments, findOne, find) rather than interacting with a real database. While this makes the tests faster and isolated, it does not verify how the schema behaves in an actual MongoDB environment, potentially missing issues related to database constraints, indexing, or real-world data inconsistencies.
 
 ## Part 3
 
 Generate the coverage report for the tests you wrote. How can you improve
 your tests using the coverage report? Briefly explain your 
 process in the space below.
+
+Based on the coverage report, I can see key information about my code coverage. There are several files with low coverage that could be improved:
+
+1. The server.ts file has 67.85% coverage with lines 25-37 uncovered, which are related to MongoDB connection in non-test environments.
+
+2. Several model files have low coverage:
+   - book.ts (40%)
+   - bookinstance.ts (46.66%)
+   - genre.ts (54.54%)
+
+3. Some route handlers also need better coverage:
+   - books.ts (41.17%)
+   - books_status.ts (55.55%)
+   - home.ts (42.1%)
+
+To improve coverage, I would:
+1. Write additional tests for the uncovered routes and models
+2. Add tests for error handling scenarios
+3. Test edge cases like empty databases or malformed requests
+4. Create integration tests that verify the interaction between components
+
+The coverage report helps me identify specific lines that aren't being tested, allowing me to target those areas with new test cases.

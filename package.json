@@ -1,4 +1,10 @@
 {
+  "scripts": {
+    "start": "npx ts-node server.ts",
+    "test:authorSchema": "NODE_ENV=test npx jest tests/authorSchema.test.ts",
+    "test:authorService": "NODE_ENV=test npx jest tests/authorService.test.ts",
+    "test:coverage": "jest --coverage"
+  },
   "dependencies": {
     "async": "*",
     "body-parser": "^1.20.2",

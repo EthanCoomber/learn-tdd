@@ -3,7 +3,7 @@ import Author, { IAuthor } from "../models/author";
 
 describe('Verify author schema', () => {
     test('should be invalid if first name is empty', async () => {
-        const author = new Author({});
+        const author = new Author();
         author.family_name = 'Doe';
         author.date_of_birth = new Date('1990-01-01');
         author.date_of_death = new Date('2020-01-01');
