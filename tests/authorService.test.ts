@@ -1,53 +1,50 @@
-import mongoose from "mongoose";
 import request from "supertest";
 import app from "../server";
 import Author from "../models/author";
 
-describe('GET /authors endpoint', () => {
-    const authors = [
-        { first_name: 'Jane', family_name: 'Austen', date_of_birth: new Date('1775-12-16'), date_of_death: new Date('1817-07-18') },
-        { first_name: 'Ernest', family_name: 'Hemingway', date_of_birth: new Date('1899-07-21'), date_of_death: new Date('1961-07-02') },
-        { first_name: 'John', family_name: 'Doe', date_of_birth: new Date('1990-01-01'), date_of_death: new Date('2020-01-01') }
+describe("Verify GET /authors", () => {
+    const mockAuthors = [
+        { name: "Tagore, Robi", lifespan: "1900 - 2000" },
+        { name: "Austen, Jane", lifespan: "1950 - 2010" },
+        { name: "Ghosh, Amitav", lifespan: "1980 - 2020" },
+        { name: "Plath, Sylvia", lifespan: "1927 - 1964" },
     ];
 
+    let consoleSpy: jest.SpyInstance;
+
     beforeAll(() => {
-        Author.getAllAuthors = jest.fn();
+        consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     });
 
     afterAll(() => {
-        jest.clearAllMocks();
+        consoleSpy.mockRestore();
     });
 
-    test('should return a list of authors sorted by family name', async () => {
-        const expectedAuthors = authors.map(author => {
-            const a = new Author(author);
-            return `${a.name} : ${a.lifespan}`;
+    it("should respond with a message when the database has no authors", async () => {
+        Author.getAllAuthors = jest.fn().mockResolvedValue([]);
+        const response = await request(app).get("/authors");
+        expect(response.statusCode).toBe(200);
+        expect(response.text).toBe("No authors found");
+    });
+
+    it("should respond with a list of author names and lifetimes sorted by family name", async () => {
+        const expextedSortedAuthors = [...mockAuthors]
+            .sort((a, b) => a.name.localeCompare(b.name))
+        Author.getAllAuthors = jest.fn().mockImplementationOnce((sortOpts) => {
+            if (sortOpts && sortOpts.family_name === 1) {
+                return Promise.resolve(expextedSortedAuthors);
+            }
+            return Promise.resolve(mockAuthors);
         });
-        
-        (Author.getAllAuthors as jest.Mock).mockResolvedValueOnce(expectedAuthors);
-        
-        const response = await request(app).get('/authors');
-        
-        expect(response.status).toBe(200);
-        expect(response.body).toEqual(expectedAuthors);
-        expect(Author.getAllAuthors).toHaveBeenCalledWith({ family_name: 1 });
+        const response = await request(app).get("/authors");
+        expect(response.statusCode).toBe(200);
+        expect(expextedSortedAuthors).toStrictEqual(response.body);
     });
 
-    test('should return "No authors found" when there are no authors', async () => {
-        (Author.getAllAuthors as jest.Mock).mockResolvedValueOnce([]);
-        
-        const response = await request(app).get('/authors');
-        
-        expect(response.status).toBe(200);
-        expect(response.text).toBe('No authors found');
-    });
-
-    test('should return "No authors found" when an error occurs', async () => {
-        (Author.getAllAuthors as jest.Mock).mockRejectedValueOnce(new Error('Database error'));
-        
-        const response = await request(app).get('/authors');
-        
-        expect(response.status).toBe(200);
-        expect(response.text).toBe('No authors found');
+    it("should respond with an error message when there is an error processing the request", async () => {
+        Author.getAllAuthors = jest.fn().mockRejectedValue(new Error("Database error"));
+        const response = await request(app).get("/authors");
+        expect(response.statusCode).toBe(500);
+        expect(consoleSpy).toHaveBeenCalled();
     });
 });
